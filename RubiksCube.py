@@ -1,9 +1,11 @@
 import random
 import time
+import sys
 from queue import PriorityQueue
 from itertools import count
 from bloomfilter import BloomFilter
 
+shuffleSize = int(sys.argv[1])
 maxDepth = 8
 iterator = (count(start = 0, step = 1))
 
@@ -199,8 +201,11 @@ def h1(cube: Rubik): # number of squares in the wrong place
         if not square == i // 8:
             count += 1
     return cube.stateDepth() + count
-def h2(cube: Rubik):
-    pass
+def h2(cube: Rubik): # counting the absolute difference bewtween squares
+    count = 0
+    for i in range(47):
+        count += abs(int(cube.state[i+1]) - int(cube.state[i]))
+    return cube.stateDepth() + count
 def h3(cube: Rubik):
     pass
 
@@ -260,13 +265,13 @@ def astar(cube, h):
 if __name__ == '__main__':
     cube = Rubik()
 
-    scram = cube.scramble(maxDepth)
-    #scram = cube.shuffle("FeaDCDE")
+    #scram = cube.scramble(shuffleSize)
+    scram = cube.shuffle("FeaDCDE")
     print("Scramble: " + scram)
     cube.printCube()
 
     startTime = time.perf_counter()
-    res = astar(cube, h1)
+    res = astar(cube, h2)
     endTime = time.perf_counter()
     elapsedTime = endTime - startTime
 
