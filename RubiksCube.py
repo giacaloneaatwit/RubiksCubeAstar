@@ -1,3 +1,11 @@
+"""
+Command Line arguments:
+python RubiksCube.py a b c
+a: heuristic to use
+b: 0 for single given scramble, 1 for single random scramble, 2 for doing the 100 scrambles, 3 is used for testing things
+c: if b is 0, provide the scramble. else, provide size of the scramble to look at
+"""
+
 import random
 import time
 import sys
@@ -5,8 +13,11 @@ from queue import PriorityQueue
 from itertools import count
 from bloomfilter import BloomFilter
 
-shuffleSize = int(sys.argv[1])
-maxDepth = 8
+shuffleSize = 0
+if int(sys.argv[2]) == 1 or int(sys.argv[2]) == 2:
+    shuffleSize = int(sys.argv[3])
+heuristic = int(sys.argv[1])
+maxDepth = 7
 iterator = (count(start = 0, step = 1))
 
 class Rubik:
@@ -206,8 +217,26 @@ def h2(cube: Rubik): # counting the absolute difference bewtween squares
     for i in range(47):
         count += abs(int(cube.state[i+1]) - int(cube.state[i]))
     return cube.stateDepth() + count
-def h3(cube: Rubik):
-    pass
+def h3(cube: Rubik): # number of edge and corner pieces that are in the wrong place
+    countEdge = 0
+    countCorner = 0
+    for i in range(48):
+        square = int(cube.state[i])
+        if not square == i // 8:
+            if i % 2 == 0:
+                countCorner += 1
+            else:
+                countEdge += 1
+    return cube.stateDepth() + countEdge/2 + countCorner/3
+def h(heuristic):
+    if heuristic == 1:
+        return h1
+    elif heuristic == 2:
+        return h2
+    elif heuristic == 3:
+        return h3
+    else:
+        return
 
 def cycleCheck(cube: Rubik, expanded, bloom):
     if not cube.getState() in bloom:
@@ -239,23 +268,15 @@ def astar(cube, h):
     frontier = PriorityQueue()
     frontier.put( (h(cube), next(iterator), cube) )
     expanded = []
-    bloomFilter = BloomFilter(expected_insertions=100000000, err_rate=0.01)
-    dupesFound = 0
-    notFound = 0
+    bloomFilter = BloomFilter(expected_insertions=1000000000, err_rate=0.000000001)
 
     while not frontier.empty():
         priority, counter, c = frontier.get()
         if c.isSolved():
-            print()
-            print(f"{dupesFound} found")
-            print(f"{notFound} new states")
             return c
         
         if cycleCheck(c, expanded, bloomFilter):
-            dupesFound += 1
             continue
-        else:
-            notFound += 1
 
         expand(c, frontier, h)
         bloomFilter.put(c.getState())
@@ -263,19 +284,101 @@ def astar(cube, h):
     return None
 
 if __name__ == '__main__':
-    cube = Rubik()
+    if int(sys.argv[2]) == 0: # solve a single given scramble
+        cube = Rubik()
 
-    #scram = cube.scramble(shuffleSize)
-    scram = cube.shuffle("FeaDCDE")
-    print("Scramble: " + scram)
-    cube.printCube()
+        scram = cube.shuffle(sys.argv[3])
+        print("Scramble: " + scram)
+        cube.printCube()
 
-    startTime = time.perf_counter()
-    res = astar(cube, h2)
-    endTime = time.perf_counter()
-    elapsedTime = endTime - startTime
+        startTime = time.perf_counter()
+        res = astar(cube, h(heuristic))
+        endTime = time.perf_counter()
+        elapsedTime = endTime - startTime
 
-    res.printCube()
-    print(f"Number of states generated: {Rubik.numGenerated}")
-    print(f"Number of states expanded: {Rubik.numExpanded}")
-    print(f"Time elapsed: {elapsedTime:.2f} seconds")
+        if res is None:
+            print("Cube Failed")
+        else:
+            res.printCube()
+        print(f"Number of states generated: {Rubik.numGenerated}")
+        print(f"Number of states expanded: {Rubik.numExpanded}")
+        print(f"Time elapsed: {elapsedTime:.2f} seconds")
+
+    elif int(sys.argv[2]) == 1: # solve a single random scramble
+        cube = Rubik()
+
+        scram = cube.scramble(shuffleSize)
+        print("Scramble: " + scram)
+        cube.printCube()
+
+        startTime = time.perf_counter()
+        res = astar(cube, h(heuristic))
+        endTime = time.perf_counter()
+        elapsedTime = endTime - startTime
+
+        print("")
+        if res is None:
+            print("Cube Failed")
+        else:
+            res.printCube()
+        print(f"Number of states generated: {Rubik.numGenerated}")
+        print(f"Number of states expanded: {Rubik.numExpanded}")
+        print(f"Time elapsed: {elapsedTime:.2f} seconds")
+
+    elif int(sys.argv[2]) == 2: # solve the 100 scrambles 
+        scrambles = []
+        with open(f"Scrambles/scram{shuffleSize}.txt") as f:
+            scrambles = [line.strip() for line in f]
+        
+        #with open("Scrambles/CollisionTest.txt") as f:
+        #    scrambles = [line.strip() for line in f]
+
+        solveTimes = []
+        numExp = []
+        numGen = []
+        numFailed = 0
+        for i, scramble in enumerate(scrambles):
+            Rubik.numExpanded = 0
+            Rubik.numGenerated = 0
+            cube = Rubik()
+            cube.shuffle(scramble)
+
+            startTime = time.perf_counter()
+            res = astar(cube, h(heuristic))
+            endTime = time.perf_counter()
+            elapsedTime = endTime - startTime
+
+            solveTimes.append(elapsedTime)
+            numExp.append(Rubik.numExpanded)
+            numGen.append(Rubik.numGenerated)
+            if res is None:
+                print(f"Failed {i}: {scramble} in {elapsedTime:.2f} seconds. {Rubik.numExpanded} states expanded. {Rubik.numGenerated} states generated")
+                numFailed += 1
+            else:
+                #pass
+                print(f"Completed {i}: {scramble} in {elapsedTime:.2f} seconds. {Rubik.numExpanded} states expanded. {Rubik.numGenerated} states generated")
+            #print(f"\rCompleted {i}: {scramble} in {elapsedTime:.2f} seconds. {Rubik.numExpanded} states expanded. {Rubik.numGenerated} states generated----------------", end="", flush=True)
+        print("")
+        avgTime = sum(solveTimes) / len(solveTimes)
+        avgExp = sum(numExp) / len(numExp)
+        avgGen = sum(numGen) / len(numGen)
+        print(f"DEPTH OF {shuffleSize} WITH h{heuristic} COMPLETE!\nAverage Time: {avgTime:.2f}\nAverage Number of States Expanded: {avgExp}\nAverage Number of States Generated: {avgGen}")
+        print(f"{numFailed} failed.")
+    
+    elif int(sys.argv[2]) == 3: #used for testing things without messing with the other paths
+        cube = Rubik()
+
+        scram = cube.shuffle(sys.argv[3])
+        print("Scramble: " + scram)
+        cube.printCube()
+        print(f"H1: {h1(cube)}\nH2: {h2(cube)}\nH3: {h3(cube)}\n")
+
+        for i in range(len(sys.argv[3])):
+            cube.turn(sys.argv[3][len(sys.argv[3])-i-1])
+            cube.turn(sys.argv[3][len(sys.argv[3])-i-1])
+            cube.turn(sys.argv[3][len(sys.argv[3])-i-1])
+            print(cube.getState())
+            
+            #cube.printCube()
+            #print(f"H1: {h1(cube)}\nH2: {h2(cube)}\nH3: {h3(cube)}\n")
+        
