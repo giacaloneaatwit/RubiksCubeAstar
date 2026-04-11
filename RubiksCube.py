@@ -11,13 +11,14 @@ import time
 import sys
 from queue import PriorityQueue
 from itertools import count
-from bloomfilter import BloomFilter
+from probables import CountingBloomFilter as BloomFilter
+#from bloomfilter import BloomFilter
 
 shuffleSize = 0
 if int(sys.argv[2]) == 1 or int(sys.argv[2]) == 2:
     shuffleSize = int(sys.argv[3])
 heuristic = int(sys.argv[1])
-maxDepth = 7
+maxDepth = 8
 iterator = (count(start = 0, step = 1))
 
 class Rubik:
@@ -238,8 +239,13 @@ def h(heuristic):
     else:
         return
 
-def cycleCheck(cube: Rubik, expanded, bloom):
-    if not cube.getState() in bloom:
+def cycleCheck(cube: Rubik, bloom):
+    res = bloom.check(cube.getState())
+    if res == 0:
+        bloom.add(cube.getPath(), max(cube.stateDepth(), 1))
+        return False
+    elif res > cube.stateDepth():
+        bloom.remove(cube.getState(), res - cube.stateDepth())
         return False
     return True
     for ex in expanded:
@@ -248,8 +254,8 @@ def cycleCheck(cube: Rubik, expanded, bloom):
     return False
 
 def expand(cube: Rubik, queue: PriorityQueue, h):
-    if cube.stateDepth() >= maxDepth:
-        return
+    #if cube.stateDepth() >= maxDepth:
+    #    return
     for char in "AaBbCcDdEeFf":
         #don't consider moves that just undo the previous move
         if cube.stateDepth() > 0:
@@ -267,20 +273,20 @@ def expand(cube: Rubik, queue: PriorityQueue, h):
 def astar(cube, h):
     frontier = PriorityQueue()
     frontier.put( (h(cube), next(iterator), cube) )
-    expanded = []
-    bloomFilter = BloomFilter(expected_insertions=1000000000, err_rate=0.000000001)
+    #bloomFilter = BloomFilter(expected_insertions=1000000000, err_rate=0.000000001)
+    bloomFilter = BloomFilter(est_elements=10000000, false_positive_rate=0.00001)
 
     while not frontier.empty():
         priority, counter, c = frontier.get()
         if c.isSolved():
             return c
-        
-        if cycleCheck(c, expanded, bloomFilter):
+        if c.stateDepth() >= maxDepth:
+            continue
+        if cycleCheck(c, bloomFilter):
             continue
 
         expand(c, frontier, h)
-        bloomFilter.put(c.getState())
-        #expanded.append(c.getState())
+        #bloomFilter.add(c.getState())
     return None
 
 if __name__ == '__main__':
