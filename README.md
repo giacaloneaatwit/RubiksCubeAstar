@@ -1,3 +1,6 @@
 This program uses this bloom filter package
 
-pip install bloomfilter-py
+
+```
+pip install pyprobables
+```

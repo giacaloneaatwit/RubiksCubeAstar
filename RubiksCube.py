@@ -12,7 +12,6 @@ import sys
 from queue import PriorityQueue
 from itertools import count
 from probables import CountingBloomFilter as BloomFilter
-#from bloomfilter import BloomFilter
 
 shuffleSize = 0
 if int(sys.argv[2]) == 1 or int(sys.argv[2]) == 2:
@@ -248,10 +247,6 @@ def cycleCheck(cube: Rubik, bloom):
         bloom.remove(cube.getState(), res - cube.stateDepth())
         return False
     return True
-    for ex in expanded:
-        if cube.getState() == ex:
-            return True
-    return False
 
 def expand(cube: Rubik, queue: PriorityQueue, h):
     #if cube.stateDepth() >= maxDepth:
@@ -268,12 +263,11 @@ def expand(cube: Rubik, queue: PriorityQueue, h):
 
         queue.put( (h(newCube), next(iterator), newCube) )
     Rubik.numExpanded += 1
-    print(f"\r{Rubik.numExpanded} states expanded so far", end="", flush=True)
+    #print(f"\r{Rubik.numExpanded} states expanded so far", end="", flush=True)
 
 def astar(cube, h):
     frontier = PriorityQueue()
     frontier.put( (h(cube), next(iterator), cube) )
-    #bloomFilter = BloomFilter(expected_insertions=1000000000, err_rate=0.000000001)
     bloomFilter = BloomFilter(est_elements=10000000, false_positive_rate=0.00001)
 
     while not frontier.empty():
@@ -286,7 +280,6 @@ def astar(cube, h):
             continue
 
         expand(c, frontier, h)
-        #bloomFilter.add(c.getState())
     return None
 
 if __name__ == '__main__':
@@ -361,17 +354,17 @@ if __name__ == '__main__':
                 print(f"Failed {i}: {scramble} in {elapsedTime:.2f} seconds. {Rubik.numExpanded} states expanded. {Rubik.numGenerated} states generated")
                 numFailed += 1
             else:
-                #pass
-                print(f"Completed {i}: {scramble} in {elapsedTime:.2f} seconds. {Rubik.numExpanded} states expanded. {Rubik.numGenerated} states generated")
+                #print(f"Completed {i}: {scramble} in {elapsedTime:.2f} seconds. {Rubik.numExpanded} states expanded. {Rubik.numGenerated} states generated")
+                print(f"{i},{scramble},{elapsedTime:.2f},{Rubik.numExpanded},{Rubik.numGenerated}")
             #print(f"\rCompleted {i}: {scramble} in {elapsedTime:.2f} seconds. {Rubik.numExpanded} states expanded. {Rubik.numGenerated} states generated----------------", end="", flush=True)
-        print("")
-        avgTime = sum(solveTimes) / len(solveTimes)
-        avgExp = sum(numExp) / len(numExp)
-        avgGen = sum(numGen) / len(numGen)
-        print(f"DEPTH OF {shuffleSize} WITH h{heuristic} COMPLETE!\nAverage Time: {avgTime:.2f}\nAverage Number of States Expanded: {avgExp}\nAverage Number of States Generated: {avgGen}")
-        print(f"{numFailed} failed.")
+        #print("")
+        #avgTime = sum(solveTimes) / len(solveTimes)
+        #avgExp = sum(numExp) / len(numExp)
+        #avgGen = sum(numGen) / len(numGen)
+        #print(f"DEPTH OF {shuffleSize} WITH h{heuristic} COMPLETE!\nAverage Time: {avgTime:.2f}\nAverage Number of States Expanded: {avgExp}\nAverage Number of States Generated: {avgGen}")
+        #print(f"{numFailed} failed.")
     
-    elif int(sys.argv[2]) == 3: #used for testing things without messing with the other paths
+    elif int(sys.argv[2]) == 3: #used for testing things without messing with the other options
         cube = Rubik()
 
         scram = cube.shuffle(sys.argv[3])
