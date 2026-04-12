@@ -56,13 +56,20 @@ if __name__ == '__main__':
             #print(f"Depth of {i} has an average time of {sum(list(data[i][j]['time']))/100:.2f} seconds with h{j}.")
             #print(f"With depth of {i} and h{j}, after 5 seconds, its expected to last {merl(list(data[i][j]['time']), 5)} more seconds")
     
-    #makeLineChart(data, "time", "Average Solve Times For Each Heuristic", "Depth", "Average Time (sec)")
-    #makeLineChart(data, "numgen", "Average Number Of States Generated For Each Heuristic", "Depth", "Average Number Of States Generated")
-    #makeHistogram(data, "time", 2, [-1,5], 15, "Time Distribution For h2 With Depth 8", "Time (sec)", "Frequency")
-    makeHistogram(data, "numexp", 2, [0,9], 15, "Distribution For Number Of Expanded States For h2 With Depth 8", "Number Of Nodes Expanded", "Frequency")
+    makeLineChart(data, "time", "Average Solve Times For Each Heuristic", "Depth", "Average Time (sec)")
+    makeLineChart(data, "numexp", "Average Number Of States Expanded For Each Heuristic", "Depth", "Average Number Of States Expanded")
+    makeLineChart(data, "numgen", "Average Number Of States Generated For Each Heuristic", "Depth", "Average Number Of States Generated")
     
-    #makeMERLchart(data, "time", [0,9], True, "MERL Of Time For Depth 8", "Given Time (sec)", "Expected Remaining Time (sec)")
-    #makeMERLchart(data, "numexp", [0,9], True, "MERL Of Expanded States For Depth 8", "Expanded States So far", "Expected Remaining States")
-    #makeMERLchart(data, "numgen", [0,9], True, "MERL Of generated States For Depth 8", "Generated States So far", "Expected Remaining States")
+    makeHistogram(data, "time", 1, [-1,5], 15, "Time Distribution For h1 With Depth 8", "Time (sec)", "Frequency")
+    makeHistogram(data, "time", 2, [-1,5], 15, "Time Distribution For h2 With Depth 8", "Time (sec)", "Frequency")
+    makeHistogram(data, "time", 3, [-1,5], 15, "Time Distribution For h3 With Depth 8", "Time (sec)", "Frequency")
+
+    makeHistogram(data, "numexp", 1, [0,9], 15, "Distribution For Number Of Expanded States For h1 With Depth 8", "Number Of Nodes Expanded", "Frequency")
+    makeHistogram(data, "numexp", 2, [0,9], 15, "Distribution For Number Of Expanded States For h2 With Depth 8", "Number Of Nodes Expanded", "Frequency")
+    makeHistogram(data, "numexp", 3, [0,9], 15, "Distribution For Number Of Expanded States For h3 With Depth 8", "Number Of Nodes Expanded", "Frequency")
+    
+    makeMERLchart(data, "time", [0,9], True, "MERL Of Time For Depth 8", "Given Time (sec)", "Expected Remaining Time (sec)")
+    makeMERLchart(data, "numexp", [0,9], True, "MERL Of Expanded States For Depth 8", "Expanded States So far", "Expected Remaining States")
+    makeMERLchart(data, "numgen", [0,9], True, "MERL Of Generated States For Depth 8", "Generated States So far", "Expected Remaining States")
     
     
