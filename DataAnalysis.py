@@ -1,4 +1,6 @@
 import sys
+import pandas as pd
+import matplotlib as plt
 
 def survivalProbability(list, input):
     out = 0
